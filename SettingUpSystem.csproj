@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Cake.Powershell" Version="4.0.0" />
     <PackageReference Include="System.DirectoryServices" Version="9.0.5" />
     <PackageReference Include="System.DirectoryServices.AccountManagement" Version="9.0.5" />
   </ItemGroup>

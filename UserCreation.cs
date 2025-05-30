@@ -1,73 +1,162 @@
-﻿using System.Diagnostics;
-using System.Security.Principal;
-using Microsoft.Win32;
+﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Management.Automation;
 
 namespace SettingUpSystem
 {
     internal class UserCreation
-    { 
-        public static void CreateUser_Kasa(string username, string password, string startProgramPath, string startInPath)
+    {
+        public static void CreateUserWithRDSSettings(
+                string username,
+                string password,
+                string startProgramPath = null,
+                string startInPath = null,
+                bool connectClientDrives = true,
+                bool connectClientPrinters = true,
+                bool defaultToMainClientPrinter = true,
+                int? activeSessionLimitDays = null,
+                int? idleSessionLimitMinutes = null,
+                bool disconnectWhenLimitReached = true,
+                bool endSessionWhenLimitReached = false,
+                bool allowReconnectionFromAnyClient = true)
         {
             try
             {
-                Process.Start(
-                    new ProcessStartInfo
-                    {
-                        FileName = "net",
-                        Arguments = $"user {username} {password} /add",
-                        Verb = "runas",
-                        UseShellExecute = true
-                    }).WaitForExit();
+                CreateLocalUser(username, password);
 
-                Process.Start(new ProcessStartInfo
+                AddUserToRemoteDesktopGroup(username);
+
+                if (!string.IsNullOrEmpty(startProgramPath))
                 {
-                    FileName = "net",
-                    Arguments = $"localgroup \"Remote Desktop Users\" {username} /add",
-                    Verb = "runas",
-                    UseShellExecute = true
-                }).WaitForExit();
+                    SetRDSEnvironmentSettings(
+                        username,
+                        startProgramPath,
+                        startInPath,
+                        connectClientDrives,
+                        connectClientPrinters,
+                        defaultToMainClientPrinter);
+                }
 
-                Console.WriteLine($"User {username} created");
+                SetRDSSessionSettings(
+                    username,
+                    activeSessionLimitDays,
+                    idleSessionLimitMinutes,
+                    disconnectWhenLimitReached,
+                    endSessionWhenLimitReached,
+                    allowReconnectionFromAnyClient);
 
-                string userRegistryPath = $"HKEY_USERS\\{GetUserSID(username)}\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
-                Registry.SetValue(userRegistryPath, "Start1C", startProgramPath);
+                Console.WriteLine($"Користувача {username} успішно створено з налаштованими параметрами RDS");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: " + ex.Message);
+                Console.WriteLine($"Помилка: {ex.Message}");
             }
+        }
+        private static void SetRDSEnvironmentSettings(
+            string username,
+            string startProgramPath,
+            string startInPath,
+            bool connectClientDrives,
+            bool connectClientPrinters,
+            bool defaultToMainClientPrinter)
+        {
+            string script = $@"
+                Import-Module RemoteDesktop
+                $user = Get-LocalUser -Name '{username}'
+                $params = @{{
+                    InitialProgram = '{startProgramPath}'
+                    WorkDirectory = '{startInPath}'
+                    ConnectClientDrivesAtLogon = ${connectClientDrives.ToString().ToLower()}
+                    ConnectClientPrintersAtLogon = ${connectClientPrinters.ToString().ToLower()}
+                    DefaultToMainPrinter = ${defaultToMainClientPrinter.ToString().ToLower()}
+                }}
+                Set-RDUserEnvironment -User $user.SID @params
+            ";
 
+            ExecutePowerShellScript(script);
         }
 
-        static string GetUserSID(string username)
+
+        private static void SetRDSSessionSettings(
+                    string username,
+                    int? activeSessionLimitDays,
+                    int? idleSessionLimitMinutes,
+                    bool disconnectWhenLimitReached,
+                    bool endSessionWhenLimitReached,
+                    bool allowReconnectionFromAnyClient)
         {
-            var ntAccount = new NTAccount(username);
-            var sid = (SecurityIdentifier)ntAccount.Translate(typeof(SecurityIdentifier));
-            return sid.Value;
+            string script = $@"
+                Import-Module RemoteDesktop
+                $user = Get-LocalUser -Name '{username}'
+                $params = @{{";
+
+            if (activeSessionLimitDays.HasValue)
+                script += $"ActiveSessionLimit = New-TimeSpan -Days {activeSessionLimitDays.Value}\r\n";
+
+            if (idleSessionLimitMinutes.HasValue)
+                script += $"IdleSessionLimit = New-TimeSpan -Minutes {idleSessionLimitMinutes.Value}\r\n";
+
+            script += $@"
+                    DisconnectedSessionLimit = New-TimeSpan -Days 1
+                    BrokenConnectionAction = '{(disconnectWhenLimitReached ? "Disconnect" : "Terminate")}'
+                    ReconnectionAction = '{(allowReconnectionFromAnyClient ? "FromAnyClient" : "FromOriginalClient")}'
+                }}
+                Set-RDUserSessionConfiguration -User $user.SID @params
+            ";
+
+            ExecutePowerShellScript(script);
         }
 
-        public static void CreateUser_simple(string username, string password)
+        private static void CreateLocalUser(string username, string password)
         {
-            string command = $"net user {username} {password} /add /passwordchg:no";
+            ExecuteCommand($"net user {username} {password} /add");
+        }
 
-            ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", "/c" + command)
+        private static void AddUserToRemoteDesktopGroup(string username)
+        {
+            ExecuteCommand($"net localgroup \"Remote Desktop Users\" {username} /add");
+        }
+
+        private static void ExecuteCommand(string command)
+        {
+            ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", $"/c {command}")
             {
                 Verb = "runas",
                 UseShellExecute = true,
+                CreateNoWindow = true,
             };
 
-            try
+            using (Process process = Process.Start(psi))
             {
-                Process process = Process.Start(psi);
                 process.WaitForExit();
-
-                Console.WriteLine("User created successfully");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("error: " + ex.Message);
+                if (process.ExitCode != 0)
+                {
+                    throw new Exception($"Command '{command}' finished with error: {process.ExitCode}");
+                }
             }
         }
 
+        private static void ExecutePowerShellScript(string script)
+        {
+            using (PowerShell ps = PowerShell.Create())
+            {
+                ps.AddScript(script);
+                Collection<PSObject> result = ps.Invoke();
+                
+            }
+        }
+
+        public static void CreateUserSimple(string username, string password)
+        {
+            try
+            {
+                ExecuteCommand($"net user {username} {password} /add /passwordchg:no");
+                Console.WriteLine($"Користувача {username} успішно створено");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Помилка: {ex.Message}");
+            }
+        }
     }
 }
