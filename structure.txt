@@ -1,0 +1,31 @@
+/SetupTasks
+    - LanguageSetupTask.cs
+    - PrivacySetupTask.cs
+    - TimeAndDateSetupTask.cs
+    - WindowsActivationTask.cs
+    - DotNetSetupTask.cs
+    - ProgramInstallationTask.cs
+    - TaskSchedulerSetupTask.cs
+    - UserAndGroupSetupTask.cs
+    - FolderStructureTask.cs
+    - TerminalServerSetupTask.cs
+    - LicensingManagerLaunchTask.cs
+
+/Services
+    - SetupManager.cs
+    - ProcessService.cs
+    - FileService.cs
+    - RegistryService.cs
+    - SchedulerService.cs
+    - UserService.cs
+    - NetworkService.cs
+
+/Interfaces
+    - ISetupTask.cs
+    - ILogger.cs
+
+/Logging
+    - FileLogger.cs
+
+/MainWindow.xaml.cs
+/App.xaml.cs
