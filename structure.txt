@@ -16,7 +16,7 @@
     - ProcessService.cs
     - FileService.cs
     - RegistryService.cs
-    - SchedulerService.cs
+
     - UserService.cs
     - NetworkService.cs
 
