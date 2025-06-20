@@ -1,0 +1,1 @@
+﻿Start-Process "D:\(01) Soft_For_Shop\LibreOffice_7.6.7_Win_x86-64.msi" -ArgumentList "/S" -Wait -NoNewWindow

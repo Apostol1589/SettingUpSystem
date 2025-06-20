@@ -7,6 +7,62 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30px"/>
+            <RowDefinition/>
+            <RowDefinition Height="30px"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="2*" />
+                </Grid.RowDefinitions>
 
+                <CheckBox Content="Змінити часовий пояс" FontSize="14" VerticalAlignment="Center" />
+                <CheckBox Content="Додати користувачів" FontSize="14" Grid.Row="1" VerticalAlignment="Center"/>
+                <CheckBox Content="Налаштування приватності" FontSize="14" Grid.Row="2" VerticalAlignment="Center"/>
+                <CheckBox Content="Встановити WinRAR" FontSize="14" Grid.Row="3" VerticalAlignment="Center"/>
+                <CheckBox Content="Встановити Office" FontSize="14" Grid.Row="4" VerticalAlignment="Center"/>
+                <CheckBox Content="Встановити Chrome" FontSize="14" Grid.Row="5" VerticalAlignment="Center"/>
+                <CheckBox Content="Встановити Uniscale" FontSize="14" Grid.Row="6" VerticalAlignment="Center"/>
+                <CheckBox Content="Встановити AnyDesk" FontSize="14" Grid.Row="7" VerticalAlignment="Center"/>
+                <CheckBox Content="Встановити RustDesk" FontSize="14" Grid.Row="8" VerticalAlignment="Center"/>
+                <CheckBox Content="Встановити Cobian" FontSize="14" Grid.Row="9" VerticalAlignment="Center"/>
+                <CheckBox Content="Налаштувати завдання" FontSize="14" Grid.Row="10" VerticalAlignment="Center"/>
+                <CheckBox Content="Підготувати папки" FontSize="14" Grid.Row="11" VerticalAlignment="Center"/>
+
+                <Button Content="Почати" Grid.Row="12" FontSize="16" FontWeight="Bold"
+            Background="#FF007ACC" Foreground="White" VerticalAlignment="Top" Margin="10,18,10,0"/>
+            </Grid>
+
+            <Grid Grid.Column="1">
+                <TextBox Name="LogTextBox"
+             Background="#FFEFEFEF"
+             FontFamily="Consolas"
+             FontSize="13"
+             TextWrapping="Wrap"
+             VerticalScrollBarVisibility="Auto"
+             HorizontalScrollBarVisibility="Auto"
+             IsReadOnly="True"
+             Padding="10"
+             Text="Логи виконання скриптів будуть тут..." />
+            </Grid>
+        </Grid>
     </Grid>
 </Window>
